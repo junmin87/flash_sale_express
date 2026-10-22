@@ -1,29 +1,25 @@
-import { useEffect, useState } from 'react'
-
-type ApiResponse<T> =
-  | { success: true; data: T }
-  | { success: false; error: { code: string; message: string } }
+import { DemoControls } from './components/DemoControls'
+import { PurchasePanel } from './components/PurchasePanel'
+import { SaleStatusPanel } from './components/SaleStatusPanel'
+import { useSale } from './lib/useSale'
 
 function App() {
-  const [health, setHealth] = useState<unknown>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json() as Promise<ApiResponse<unknown>>)
-      .then((body) => {
-        if (!body.success) throw new Error(`${body.error.code}: ${body.error.message}`)
-        setHealth(body.data)
-      })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
-  }, [])
+  const sale = useSale()
 
   return (
-    <main>
-      <h1>Health</h1>
-      {error && <p>Request failed: {error}</p>}
-      {!error && !health && <p>Loading...</p>}
-      {health !== null && <pre>{JSON.stringify(health, null, 2)}</pre>}
+    <main className="page">
+      <h1>Flash Sale</h1>
+      <div className="layout">
+        <section className="panel purchase-area">
+          <SaleStatusPanel
+            sale={sale.data}
+            isError={sale.isError}
+            onCountdownEnd={() => void sale.refetch()}
+          />
+          <PurchasePanel sale={sale.data} />
+        </section>
+        <DemoControls sale={sale.data} />
+      </div>
     </main>
   )
 }
