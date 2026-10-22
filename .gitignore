@@ -1,0 +1,17 @@
+# env
+.env
+.env.*
+!.env.example
+
+# build / deps
+node_modules
+dist
+*.tsbuildinfo
+coverage
+
+# logs
+*.log
+
+# local only
+CLAUDE.md
+.DS_Store

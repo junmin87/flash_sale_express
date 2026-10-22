@@ -1,0 +1,75 @@
+x-api: &api
+  build: ./api
+  image: flash-sale-api
+  environment:
+    PORT: 3000
+    DATABASE_HOST: postgres
+    DATABASE_PORT: 5432
+    DATABASE_USER: ${POSTGRES_USER:-flashsale}
+    DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-flashsale}
+    DATABASE_NAME: ${POSTGRES_DB:-flashsale}
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    SALE_START_AT: ${SALE_START_AT:-}
+    SALE_END_AT: ${SALE_END_AT:-}
+    SALE_STOCK: ${SALE_STOCK:-}
+    PRODUCT_ID: ${PRODUCT_ID:-}
+    ADMIN_ENABLED: ${ADMIN_ENABLED:-}
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flashsale}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flashsale}
+      POSTGRES_DB: ${POSTGRES_DB:-flashsale}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api1:
+    <<: *api
+    hostname: api1
+
+  api2:
+    <<: *api
+    hostname: api2
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api1
+      - api2
+
+volumes:
+  postgres-data:
+  redis-data:

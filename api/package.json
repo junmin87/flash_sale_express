@@ -1,0 +1,32 @@
+{
+  "name": "api",
+  "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "start:dev": "tsx watch src/server.ts",
+    "lint": "oxlint src/",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "ioredis": "^6.0.0",
+    "joi": "^18.3.0",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.19.43",
+    "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
+    "oxlint": "^1.89.0",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.12"
+  }
+}
