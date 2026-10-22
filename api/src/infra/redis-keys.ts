@@ -12,4 +12,6 @@ export const REDIS_KEYS = {
   SALE_BUYERS: 'sale:buyers',
   // Stream of orders waiting to be persisted
   ORDER_STREAM: 'sale:orders',
+  // Consumer group of the order stream, read by the order worker
+  ORDER_GROUP: 'order-workers',
 } as const;

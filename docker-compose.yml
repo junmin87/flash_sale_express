@@ -60,6 +60,11 @@ services:
     <<: *api
     hostname: api2
 
+  # Saves orders from the Redis stream to Postgres. Not behind nginx
+  worker:
+    <<: *api
+    command: ["node", "dist/worker.js"]
+
   nginx:
     build:
       context: .
