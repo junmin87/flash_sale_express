@@ -1,9 +1,7 @@
+// [KO] 모든 에러 코드와 HTTP status·기본 메시지를 정의하는 유일한 곳
+
 export const ERROR_CODES = {
-  SALE_NOT_STARTED: {
-    status: 403,
-    message: 'The sale has not started yet',
-  },
-  SALE_ENDED: { status: 403, message: 'The sale has ended' },
+  SALE_NOT_ACTIVE: { status: 403, message: 'The sale is not active' },
   SOLD_OUT: { status: 409, message: 'The item is sold out' },
   ALREADY_PURCHASED: {
     status: 409,

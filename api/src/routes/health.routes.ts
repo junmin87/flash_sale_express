@@ -1,3 +1,5 @@
+// [KO] GET /api/health 라우트
+
 import { Router } from 'express';
 import type { createHealthController } from '../controllers/health.controller.js';
 

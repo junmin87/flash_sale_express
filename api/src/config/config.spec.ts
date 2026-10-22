@@ -1,3 +1,5 @@
+// [KO] loadConfig 유닛 테스트: 기본값·빈 문자열·잘못된 값 처리
+
 import { describe, expect, it } from 'vitest';
 import { loadConfig } from './config.js';
 

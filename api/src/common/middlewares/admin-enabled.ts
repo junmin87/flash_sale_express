@@ -1,3 +1,5 @@
+// [KO] ADMIN_ENABLED=false면 관리자 API를 404로 숨기는 미들웨어
+
 import type { RequestHandler } from 'express';
 import { config } from '../../config/config.js';
 import { AppError } from '../errors/app-error.js';

@@ -1,3 +1,5 @@
+// [KO] ok() 응답 형식 유닛 테스트
+
 import type { Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { ok } from './response.js';

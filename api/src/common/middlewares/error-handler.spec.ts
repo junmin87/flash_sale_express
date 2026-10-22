@@ -1,3 +1,5 @@
+// [KO] errorHandler 유닛 테스트: 에러 종류별 응답 형식·status 검증
+
 import type { NextFunction, Request, Response } from 'express';
 import Joi from 'joi';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -43,12 +45,12 @@ describe('errorHandler', () => {
   });
 
   it('uses the custom message of an AppError', () => {
-    const response = handle(new AppError('SALE_NOT_STARTED', 'Starts at noon'));
+    const response = handle(new AppError('SALE_NOT_ACTIVE', 'Starts at noon'));
 
     expect(response.status).toHaveBeenCalledWith(403);
     expect(response.json).toHaveBeenCalledWith({
       success: false,
-      error: { code: 'SALE_NOT_STARTED', message: 'Starts at noon' },
+      error: { code: 'SALE_NOT_ACTIVE', message: 'Starts at noon' },
     });
   });
 

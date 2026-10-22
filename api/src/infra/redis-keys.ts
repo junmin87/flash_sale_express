@@ -1,3 +1,5 @@
+// [KO] Redis 키 이름 상수. 키 문자열은 여기서만 정의한다
+
 export const REDIS_KEYS = {
   // Sale window boundaries, epoch milliseconds
   SALE_START_AT: 'sale:start_at',

@@ -1,3 +1,5 @@
+// [KO] saleService 유닛 테스트 (Redis·DB는 가짜 객체로 대체)
+
 import type { Redis } from 'ioredis';
 import type { Pool } from 'pg';
 import { describe, expect, it, vi } from 'vitest';

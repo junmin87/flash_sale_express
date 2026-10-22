@@ -1,3 +1,5 @@
+// [KO] getSaleStatus 경계값 유닛 테스트
+
 import { describe, expect, it } from 'vitest';
 import { getSaleStatus } from './sale-status.js';
 

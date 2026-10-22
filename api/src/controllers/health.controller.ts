@@ -1,3 +1,5 @@
+// [KO] 헬스체크 컨트롤러: Redis·PostgreSQL 연결 상태와 호스트명 반환
+
 import type { Request, Response } from 'express';
 import type { Redis } from 'ioredis';
 import { hostname } from 'node:os';
