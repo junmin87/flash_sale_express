@@ -95,6 +95,25 @@ describe('errorHandler', () => {
     });
   });
 
+  it('maps a too large body to VALIDATION_ERROR without logging', () => {
+    const logSpy = vi
+      .spyOn(process.stderr, 'write')
+      .mockImplementation(() => true);
+    const error = Object.assign(new Error('request entity too large'), {
+      type: 'entity.too.large',
+      status: 413,
+    });
+
+    const response = handle(error);
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({
+      success: false,
+      error: { code: 'VALIDATION_ERROR', message: 'request entity too large' },
+    });
+    expect(logSpy).not.toHaveBeenCalled();
+  });
+
   it('maps a NOT_FOUND AppError to NOT_FOUND', () => {
     const response = handle(new AppError('NOT_FOUND', 'Cannot GET /api/nope'));
 

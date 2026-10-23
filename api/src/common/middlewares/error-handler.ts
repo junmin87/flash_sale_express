@@ -11,11 +11,15 @@ interface ResolvedError {
   message: string;
 }
 
-// express.json() marks a malformed body with this type
-function isBodyParseError(err: unknown): err is Error {
+// express.json() marks body errors (malformed, too large, ...) with a string type and a 4xx status
+function isBodyError(err: unknown): err is Error {
+  if (!(err instanceof Error)) return false;
+  const { type, status } = err as Error & { type?: unknown; status?: unknown };
   return (
-    err instanceof Error &&
-    (err as Error & { type?: unknown }).type === 'entity.parse.failed'
+    typeof type === 'string' &&
+    typeof status === 'number' &&
+    status >= 400 &&
+    status <= 499
   );
 }
 
@@ -26,8 +30,8 @@ function resolve(err: unknown): ResolvedError {
     return { status: err.status, code: err.code, message: err.message };
   }
 
-  // [KO] 잘못된 JSON 본문은 400 VALIDATION_ERROR
-  if (isBodyParseError(err)) {
+  // [KO] 요청 본문 에러(잘못된 JSON, 너무 큰 본문 등)는 전부 400 VALIDATION_ERROR
+  if (isBodyError(err)) {
     return {
       status: ERROR_CODES.VALIDATION_ERROR.status,
       code: 'VALIDATION_ERROR',

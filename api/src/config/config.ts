@@ -48,26 +48,15 @@ function parseTime(env: Env, name: string, fallback: number): number {
   return time;
 }
 
-// [KO] 재고는 0 이상의 정수만 허용
-function parseStock(env: Env, name: string, fallback: number): number {
+// [KO] 0 이상의 정수만 허용 (재고, Redis 논리 DB 번호)
+function parseNonNegativeInt(env: Env, name: string, fallback: number): number {
   const value = read(env, name);
   if (value === undefined) return fallback;
-  const stock = Number(value);
-  if (!Number.isInteger(stock) || stock < 0) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
     throw new Error(`${name} must be a non-negative integer, got "${value}"`);
   }
-  return stock;
-}
-
-// [KO] Redis 논리 DB 번호는 0 이상의 정수만 허용
-function parseRedisDb(env: Env, name: string, fallback: number): number {
-  const value = read(env, name);
-  if (value === undefined) return fallback;
-  const db = Number(value);
-  if (!Number.isInteger(db) || db < 0) {
-    throw new Error(`${name} must be a non-negative integer, got "${value}"`);
-  }
-  return db;
+  return parsed;
 }
 
 // [KO] 'true'/'false' 문자열만 허용
@@ -100,12 +89,12 @@ export function loadConfig(env: Env, now: number = Date.now()): AppConfig {
     redis: {
       host: env.REDIS_HOST ?? 'localhost',
       port: Number(env.REDIS_PORT ?? 6379),
-      db: parseRedisDb(env, 'REDIS_DB', 0),
+      db: parseNonNegativeInt(env, 'REDIS_DB', 0),
     },
     sale: {
       startAt,
       endAt,
-      stock: parseStock(env, 'SALE_STOCK', DEFAULT_SALE_STOCK),
+      stock: parseNonNegativeInt(env, 'SALE_STOCK', DEFAULT_SALE_STOCK),
     },
     productId: read(env, 'PRODUCT_ID') ?? 'flash-sale-item',
     adminEnabled: parseBoolean(env, 'ADMIN_ENABLED', true),

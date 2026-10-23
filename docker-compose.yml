@@ -1,6 +1,7 @@
 x-api: &api
   build: ./api
   image: flash-sale-api
+  restart: on-failure
   environment:
     PORT: 3000
     DATABASE_HOST: postgres
@@ -41,7 +42,7 @@ services:
 
   redis:
     image: redis:7
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "always"]
     ports:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
