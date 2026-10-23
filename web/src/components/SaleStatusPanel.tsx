@@ -59,6 +59,8 @@ export function SaleStatusPanel({ sale, isError, onCountdownEnd }: Props) {
         Status:{' '}
         <span className={`badge badge-${sale.status}`}>{STATUS_LABELS[sale.status]}</span>
       </p>
+      <p>Starts at: {new Date(sale.startAt).toLocaleString()}</p>
+      <p>Ends at: {new Date(sale.endAt).toLocaleString()}</p>
       <p>
         Remaining stock: <strong>{sale.stock}</strong> / {sale.totalStock}
       </p>

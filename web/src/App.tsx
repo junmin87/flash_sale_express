@@ -16,7 +16,8 @@ function App() {
             isError={sale.isError}
             onCountdownEnd={() => void sale.refetch()}
           />
-          <PurchasePanel sale={sale.data} />
+          {/* Remount when the sale settings change, so old results are cleared */}
+          <PurchasePanel key={`${sale.data?.startAt}|${sale.data?.endAt}|${sale.data?.totalStock}`} sale={sale.data} />
         </section>
         <DemoControls sale={sale.data} />
       </div>

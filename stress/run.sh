@@ -146,5 +146,5 @@ if [ "$failed" -eq 0 ]; then
 else
   echo "RESULT: FAIL"
 fi
-echo "Sale data has been reset by this test. Use 'Start now' in Demo controls on the web page to reinitialize it."
+echo "Sale data has been reset by this test. Open 'Admin · Demo controls' at the bottom of the web page and click 'Start now' to reinitialize it."
 exit "$failed"

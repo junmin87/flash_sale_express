@@ -59,17 +59,18 @@ export function DemoControls({ sale }: Props) {
   // One guard for all four buttons, since they call the same API
   const applyingRef = useRef(false)
 
-  // Fill the form with the current sale settings once they first load
-  const prefilledRef = useRef(false)
+  // Refill the form whenever the sale settings change; polling with the same values does not reset input
+  const startAt = sale?.startAt
+  const endAt = sale?.endAt
+  const totalStock = sale?.totalStock
   useEffect(() => {
-    if (!sale || prefilledRef.current) return
-    prefilledRef.current = true
+    if (startAt === undefined || endAt === undefined || totalStock === undefined) return
     reset({
-      startAt: toLocalInput(sale.startAt),
-      endAt: toLocalInput(sale.endAt),
-      stock: sale.totalStock,
+      startAt: toLocalInput(startAt),
+      endAt: toLocalInput(endAt),
+      stock: totalStock,
     })
-  }, [sale, reset])
+  }, [startAt, endAt, totalStock, reset])
 
   const send = async (startAt: Date, endAt: Date, stock: number) => {
     setResult(null)
@@ -112,8 +113,9 @@ export function DemoControls({ sale }: Props) {
   const pending = adminSale.isPending
 
   return (
-    <details className="panel demo-controls" open>
-      <summary>Demo controls (not part of the user flow)</summary>
+    <details className="panel demo-controls">
+      <summary>Admin · Demo controls (not part of the user flow)</summary>
+      <p className="hint">For reviewers: configure or reset the sale window and stock.</p>
       <form onSubmit={(event) => void handleSubmit(onApply)(event)} noValidate>
         <label htmlFor="startAt">Start at</label>
         <input
@@ -151,7 +153,6 @@ export function DemoControls({ sale }: Props) {
         <button type="submit" className="primary" disabled={pending}>
           {pending ? 'Processing...' : 'Apply & Reset'}
         </button>
-        <p className="hint">Resets all purchases</p>
 
         <div className="preset-row">
           <button type="button" disabled={pending} onClick={() => applyPreset(0, HOUR_MS)}>
@@ -164,6 +165,12 @@ export function DemoControls({ sale }: Props) {
             End now
           </button>
         </div>
+        <ul className="hint">
+          <li>Start now: sale is active now, ends in 1 hour</li>
+          <li>Upcoming (+1 min): sale starts in 1 minute</li>
+          <li>End now: sale has ended</li>
+          <li>All buttons reset purchases and use the stock above.</li>
+        </ul>
 
         {result && (
           <p className={`message ${result.tone}`} role="status">

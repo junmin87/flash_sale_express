@@ -37,7 +37,7 @@ body {
 }
 
 .page {
-  max-width: 1040px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 24px 16px;
 }
@@ -47,17 +47,10 @@ h1 {
   font-size: 32px;
 }
 
-/* Narrow: stacked. Wide: purchase area left, demo controls right */
+/* Single column: purchase area on top, admin demo controls below */
 .layout {
   display: grid;
   gap: 24px;
-}
-
-@media (min-width: 860px) {
-  .layout {
-    grid-template-columns: 3fr 2fr;
-    align-items: start;
-  }
 }
 
 .panel {
@@ -188,8 +181,20 @@ button:disabled {
   color: var(--muted);
 }
 
+.demo-controls {
+  background: var(--bg);
+  border-style: dashed;
+}
+
 .demo-controls summary {
   cursor: pointer;
   font-weight: 600;
+}
+
+.demo-controls[open] summary {
+  margin-bottom: 12px;
+}
+
+.demo-controls > .hint {
   margin-bottom: 12px;
 }

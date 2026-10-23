@@ -114,6 +114,10 @@ export function PurchasePanel({ sale }: Props) {
             }
             return true
           },
+          onChange: () => {
+            setBuyResult(null)
+            setCheckResult(null)
+          },
         })}
       />
       {errors.userId && <p className="field-error">{errors.userId.message}</p>}
@@ -135,6 +139,7 @@ export function PurchasePanel({ sale }: Props) {
           {checkPurchase.isPending ? 'Processing...' : 'Check my order'}
         </button>
       </div>
+      <p className="hint">Calls the purchase result API (GET /api/purchases/:userId)</p>
       {checkResult && (
         <p className={`message ${checkResult.tone}`} role="status">
           {checkResult.text}
