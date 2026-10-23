@@ -12,6 +12,7 @@ import { createOrderWorker } from './workers/order.worker.js';
 const redis = new Redis({
   host: config.redis.host,
   port: config.redis.port,
+  db: config.redis.db,
   enableOfflineQueue: false,
 });
 const pool = createPool();

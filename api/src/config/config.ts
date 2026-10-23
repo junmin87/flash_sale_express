@@ -12,6 +12,8 @@ export interface AppConfig {
   redis: {
     host: string;
     port: number;
+    // Logical database index
+    db: number;
   };
   sale: {
     // Epoch milliseconds
@@ -57,6 +59,17 @@ function parseStock(env: Env, name: string, fallback: number): number {
   return stock;
 }
 
+// [KO] Redis 논리 DB 번호는 0 이상의 정수만 허용
+function parseRedisDb(env: Env, name: string, fallback: number): number {
+  const value = read(env, name);
+  if (value === undefined) return fallback;
+  const db = Number(value);
+  if (!Number.isInteger(db) || db < 0) {
+    throw new Error(`${name} must be a non-negative integer, got "${value}"`);
+  }
+  return db;
+}
+
 // [KO] 'true'/'false' 문자열만 허용
 function parseBoolean(env: Env, name: string, fallback: boolean): boolean {
   const value = read(env, name);
@@ -87,6 +100,7 @@ export function loadConfig(env: Env, now: number = Date.now()): AppConfig {
     redis: {
       host: env.REDIS_HOST ?? 'localhost',
       port: Number(env.REDIS_PORT ?? 6379),
+      db: parseRedisDb(env, 'REDIS_DB', 0),
     },
     sale: {
       startAt,

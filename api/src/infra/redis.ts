@@ -28,6 +28,7 @@ export function createRedisClient(): Redis {
   const redis = new Redis({
     host: config.redis.host,
     port: config.redis.port,
+    db: config.redis.db,
     // [KO] 연결이 끊기면 명령을 대기열에 쌓지 않고 바로 실패, 응답이 늦으면 1초 후 실패
     enableOfflineQueue: false,
     commandTimeout: 1000,

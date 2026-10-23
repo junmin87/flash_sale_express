@@ -4,6 +4,7 @@ import type { Redis } from 'ioredis';
 import type { Pool } from 'pg';
 import { describe, expect, it, vi } from 'vitest';
 import { AppError } from '../common/errors/app-error.js';
+import { config } from '../config/config.js';
 import { REDIS_KEYS } from '../infra/redis-keys.js';
 import { createSaleService } from './sale.service.js';
 
@@ -100,6 +101,36 @@ describe('createSaleService', () => {
       ]);
       vi.restoreAllMocks();
     });
+
+    it.each([
+      [1, 'Initialized sale settings in Redis'],
+      [0, 'Sale settings already exist in Redis, left unchanged'],
+    ])(
+      'passes the configured start, end and stock to MSETNX (reply %i)',
+      async (reply, message) => {
+        const { service, redis } = createService();
+        redis.msetnx.mockResolvedValue(reply);
+        const write = vi
+          .spyOn(process.stdout, 'write')
+          .mockImplementation(() => true);
+
+        await service.initSale();
+
+        expect(redis.msetnx).toHaveBeenCalledWith(
+          REDIS_KEYS.SALE_START_AT,
+          config.sale.startAt,
+          REDIS_KEYS.SALE_END_AT,
+          config.sale.endAt,
+          REDIS_KEYS.SALE_STOCK,
+          config.sale.stock,
+          REDIS_KEYS.SALE_TOTAL_STOCK,
+          config.sale.stock,
+        );
+        expect(write).toHaveBeenCalledTimes(1);
+        expect(String(write.mock.calls[0][0])).toContain(message);
+        vi.restoreAllMocks();
+      },
+    );
   });
 
   describe('setSale', () => {
