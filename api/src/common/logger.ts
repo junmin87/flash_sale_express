@@ -1,4 +1,4 @@
-// [KO] 공통 로거. info는 stdout, error는 stderr로 출력
+// Shared logger. info goes to stdout, error goes to stderr
 
 type LogLevel = 'info' | 'error';
 

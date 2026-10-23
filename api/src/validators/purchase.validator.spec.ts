@@ -1,4 +1,4 @@
-// [KO] userIdSchema 검증 규칙 유닛 테스트
+// userIdSchema validation unit tests
 
 import { describe, expect, it } from 'vitest';
 import { userIdSchema } from './purchase.validator.js';

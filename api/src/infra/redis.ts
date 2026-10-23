@@ -1,4 +1,4 @@
-// [KO] config 기반 Redis 클라이언트 생성 + 구매 Lua 스크립트 등록
+// Creates the Redis client from config and registers the purchase Lua script
 
 import { readFileSync } from 'node:fs';
 import { Redis, Result } from 'ioredis';
@@ -29,7 +29,8 @@ export function createRedisClient(): Redis {
     host: config.redis.host,
     port: config.redis.port,
     db: config.redis.db,
-    // [KO] 연결이 끊기면 명령을 대기열에 쌓지 않고 바로 실패, 응답이 늦으면 1초 후 실패
+    // Fail commands right away instead of queueing them while disconnected, and
+    // fail slow replies after 1 second
     enableOfflineQueue: false,
     commandTimeout: 1000,
   });

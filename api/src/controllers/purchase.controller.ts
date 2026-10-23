@@ -1,4 +1,5 @@
-// [KO] 구매 컨트롤러: 구매 요청(201)과 구매 여부 조회를 서비스에 위임
+// Purchase controller: passes purchase requests (201) and purchase lookups to
+// the service
 
 import type { Request, Response } from 'express';
 import { ok } from '../common/response.js';

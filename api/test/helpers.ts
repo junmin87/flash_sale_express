@@ -1,4 +1,5 @@
-// [KO] 통합 테스트 공통 준비: 실제 Redis·PostgreSQL 연결, 매 테스트 전 초기화, 세일 설정, 워커 처리 반복
+// Shared integration test setup: real Redis and PostgreSQL connections, reset
+// before each test, sale setup and worker draining
 
 import { Redis } from 'ioredis';
 import type { Pool } from 'pg';
@@ -11,7 +12,7 @@ import type { OrderWorker } from '../src/workers/order.worker.js';
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
 
-// [KO] enableOfflineQueue가 꺼져 있어 ready 전 명령은 실패하므로 기다린다
+// The offline queue is disabled, so commands fail before ready. Wait for it
 async function ready(redis: Redis): Promise<Redis> {
   if (redis.status !== 'ready') {
     await new Promise<void>((resolve, reject) => {
@@ -22,7 +23,8 @@ async function ready(redis: Redis): Promise<Redis> {
   return redis;
 }
 
-// [KO] 실제 클라이언트 생성. API용 Redis(구매 스크립트 등록)와 워커용 Redis(src/worker.ts처럼 commandTimeout 없음)
+// Creates real clients: an API Redis client (with the purchase script) and a
+// worker Redis client (no commandTimeout, like src/worker.ts)
 export async function connect(): Promise<{
   redis: Redis;
   workerRedis: Redis;
@@ -54,7 +56,8 @@ export async function disconnect({
   await pool.end();
 }
 
-// [KO] 판매 키 삭제(Stream과 함께 컨슈머 그룹도 사라짐) + orders 비우기
+// Deletes the sale keys (the consumer group goes away with the stream) and
+// empties orders
 export async function resetState(redis: Redis, pool: Pool): Promise<void> {
   await redis.del(
     REDIS_KEYS.SALE_START_AT,
@@ -69,7 +72,8 @@ export async function resetState(redis: Redis, pool: Pool): Promise<void> {
 
 export type SaleWindow = 'active' | 'upcoming' | 'ended';
 
-// [KO] 판매 기간과 재고를 Redis에 직접 기록. 경계값과 멀리 떨어진 시각을 써서 시계 차이에 흔들리지 않게 한다
+// Writes the sale window and stock to Redis directly. Times are far from the
+// boundaries so clock differences do not matter
 export async function setSale(
   redis: Redis,
   window: SaleWindow,
@@ -93,7 +97,7 @@ export async function setSale(
   );
 }
 
-// [KO] 컨슈머 그룹의 pending·lag (그룹이 없으면 null)
+// Pending and lag of the consumer group (null if there is no group)
 export async function groupInfo(
   redis: Redis,
 ): Promise<{ pending: number; lag: number | null } | null> {
@@ -120,7 +124,6 @@ export async function groupInfo(
 
 // Calls runOnce only while entries are left, because reading an empty
 // stream blocks
-// [KO] 그룹이 있고 미전달(lag)·미확인(pending) 메모가 0이 될 때까지 runOnce 반복
 export async function drainOrders(
   worker: OrderWorker,
   redis: Redis,

@@ -1,4 +1,5 @@
-// [KO] POST /api/purchases, GET /api/purchases/:userId 통합 테스트 (실제 Redis Lua 스크립트)
+// POST /api/purchases and GET /api/purchases/:userId integration tests (real
+// Redis Lua script)
 
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -25,7 +26,7 @@ describe('purchases', () => {
     await disconnect(clients);
   });
 
-  // [KO] 재고·구매자 수·Stream 길이를 한 번에 읽는다
+  // Reads stock, buyer count and stream length at once
   async function saleCounts() {
     const { redis } = clients;
     return {

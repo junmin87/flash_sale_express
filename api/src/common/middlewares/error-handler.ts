@@ -1,4 +1,5 @@
-// [KO] 모든 에러를 { success: false, error: { code, message } } 형식으로 변환하는 공통 에러 미들웨어
+// Shared error middleware that turns every error into { success: false, error:
+// { code, message } }
 
 import type { ErrorRequestHandler } from 'express';
 import { AppError } from '../errors/app-error.js';
@@ -23,14 +24,14 @@ function isBodyError(err: unknown): err is Error {
   );
 }
 
-// [KO] 에러 종류별로 status·code·message 결정
+// Picks the status, code and message for each kind of error
 function resolve(err: unknown): ResolvedError {
-  // [KO] 비즈니스 에러: AppError에 담긴 코드 그대로 사용
   if (err instanceof AppError) {
     return { status: err.status, code: err.code, message: err.message };
   }
 
-  // [KO] 요청 본문 에러(잘못된 JSON, 너무 큰 본문 등)는 전부 400 VALIDATION_ERROR
+  // Request body errors (invalid JSON, body too large, ...) are all 400
+  // VALIDATION_ERROR
   if (isBodyError(err)) {
     return {
       status: ERROR_CODES.VALIDATION_ERROR.status,
@@ -39,7 +40,8 @@ function resolve(err: unknown): ResolvedError {
     };
   }
 
-  // [KO] 예상 못 한 에러는 로그로만 남기고, 클라이언트에는 내부 정보를 숨긴 500 응답
+  // Unexpected errors are only logged. The client gets a 500 without internal
+  // details
   log('error', err instanceof Error ? (err.stack ?? err.message) : String(err));
   return {
     status: ERROR_CODES.INTERNAL_ERROR.status,

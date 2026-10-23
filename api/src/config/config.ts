@@ -1,4 +1,5 @@
-// [KO] 환경변수를 읽고 검증해 앱 설정 객체를 만든다. process.env는 이 파일에서만 읽는다
+// Reads and validates environment variables into the app config. process.env is
+// read only in this file
 
 export interface AppConfig {
   port: number;
@@ -31,13 +32,12 @@ const DEFAULT_SALE_DURATION_MS = 60 * 60 * 1000;
 const DEFAULT_SALE_STOCK = 100;
 
 // docker compose passes unset variables as empty strings, so treat them as missing
-// [KO] 공백·빈 문자열은 undefined로 처리
 function read(env: Env, name: string): string | undefined {
   const value = env[name]?.trim();
   return value ? value : undefined;
 }
 
-// [KO] ISO 8601 문자열을 epoch ms로 변환, 잘못된 값이면 부팅 실패
+// Parses an ISO 8601 string to epoch ms. Invalid values fail the boot
 function parseTime(env: Env, name: string, fallback: number): number {
   const value = read(env, name);
   if (value === undefined) return fallback;
@@ -48,7 +48,7 @@ function parseTime(env: Env, name: string, fallback: number): number {
   return time;
 }
 
-// [KO] 0 이상의 정수만 허용 (재고, Redis 논리 DB 번호)
+// Allows only integers of 0 or more (stock, Redis logical DB number)
 function parseNonNegativeInt(env: Env, name: string, fallback: number): number {
   const value = read(env, name);
   if (value === undefined) return fallback;
@@ -59,7 +59,7 @@ function parseNonNegativeInt(env: Env, name: string, fallback: number): number {
   return parsed;
 }
 
-// [KO] 'true'/'false' 문자열만 허용
+// Allows only 'true' or 'false'
 function parseBoolean(env: Env, name: string, fallback: boolean): boolean {
   const value = read(env, name);
   if (value === undefined) return fallback;
@@ -68,11 +68,11 @@ function parseBoolean(env: Env, name: string, fallback: boolean): boolean {
   throw new Error(`${name} must be "true" or "false", got "${value}"`);
 }
 
-// [KO] now를 인자로 받아 테스트에서 기본 세일 시간(현재 ~ 1시간 후)을 고정할 수 있다
+// Takes now as an argument so tests can fix the default sale window (now to 1
+// hour later)
 export function loadConfig(env: Env, now: number = Date.now()): AppConfig {
   const startAt = parseTime(env, 'SALE_START_AT', now);
   const endAt = parseTime(env, 'SALE_END_AT', now + DEFAULT_SALE_DURATION_MS);
-  // [KO] 시작 시각은 종료 시각보다 빨라야 한다
   if (startAt >= endAt) {
     throw new Error('SALE_START_AT must be earlier than SALE_END_AT');
   }
@@ -101,5 +101,5 @@ export function loadConfig(env: Env, now: number = Date.now()): AppConfig {
   };
 }
 
-// [KO] 모듈 로드 시 한 번 생성되는 전역 설정
+// Global config, created once when the module loads
 export const config: AppConfig = loadConfig(process.env);

@@ -1,4 +1,6 @@
-// [KO] 통합 테스트 설정. 실행 중인 서비스와 같은 Redis·PostgreSQL 컨테이너를 쓰되 Redis 1번 DB, flashsale_test DB로 분리한다. 테스트 파일끼리는 저장 공간을 공유하므로 순서대로 실행한다
+// Integration test config. Uses the same Redis and PostgreSQL containers as the
+// running services, but Redis DB 1 and the flashsale_test database. Test files
+// share that storage, so they run one at a time
 
 import { defineConfig } from 'vitest/config';
 

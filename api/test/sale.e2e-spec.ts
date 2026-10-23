@@ -1,4 +1,5 @@
-// [KO] GET /api/sale 통합 테스트: 판매 상태(active·upcoming·ended)와 재고 값
+// GET /api/sale integration tests: sale status (active, upcoming, ended) and
+// stock values
 
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';

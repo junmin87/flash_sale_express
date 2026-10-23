@@ -1,4 +1,5 @@
-// [KO] 관리자 컨트롤러: 세일 재설정 요청을 서비스에 위임하고 201로 응답
+// Admin controller: passes sale reset requests to the service and responds with
+// 201
 
 import type { Request, Response } from 'express';
 import { ok } from '../common/response.js';

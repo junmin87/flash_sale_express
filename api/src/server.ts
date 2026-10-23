@@ -1,4 +1,5 @@
-// [KO] 진입점: Redis·DB 연결 생성, 세일 설정 초기화, HTTP 서버 시작, 종료 시그널 처리
+// Entry point: creates Redis and DB connections, initializes the sale settings,
+// starts the HTTP server and handles shutdown signals
 
 import { createApp } from './app.js';
 import { log } from './common/logger.js';
@@ -12,7 +13,7 @@ const pool = createPool();
 
 // Without listeners these errors are printed by ioredis or crash the
 // process (pg emits 'error' when an idle client loses its connection)
-// [KO] 연결 에러는 로그만 남기고 프로세스는 유지. 재연결은 ioredis·pg가 처리
+// Only log and keep the process running. ioredis and pg handle reconnects
 redis.on('error', (error: Error) => {
   log('error', `Redis connection error: ${error.message}`);
 });
@@ -22,12 +23,11 @@ pool.on('error', (error: Error) => {
 
 // The offline queue is disabled, so commands fail until the connection is
 // ready. ioredis keeps reconnecting until then
-// [KO] Redis 연결이 준비될 때까지 기다린 뒤 initSale 실행
 if (redis.status !== 'ready') {
   await new Promise<void>((resolve) => redis.once('ready', resolve));
 }
 
-// [KO] 서버를 열기 전에 Redis에 세일 설정을 준비한다
+// Prepare the sale settings in Redis before opening the server
 await createSaleService({ redis, pool }).initSale();
 
 const app = createApp({ redis, pool });
@@ -36,7 +36,7 @@ const server = app.listen(config.port, (error) => {
   log('info', `API listening on port ${config.port}`);
 });
 
-// [KO] 새 요청을 막고 Redis·DB 연결을 정리한 뒤 프로세스 종료
+// Stop new requests, close the Redis and DB connections, then exit
 async function shutdown(signal: NodeJS.Signals): Promise<void> {
   log('info', `Received ${signal}, shutting down`);
   await new Promise<void>((resolve, reject) => {

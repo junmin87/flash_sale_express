@@ -1,4 +1,4 @@
-// [KO] Joi 스키마로 req.body 또는 req.params를 검증하는 미들웨어 팩토리
+// Middleware factory that validates req.body or req.params with a Joi schema
 
 import type { RequestHandler } from 'express';
 import type { ObjectSchema } from 'joi';
@@ -23,14 +23,14 @@ export function validate(
       abortEarly: false,
       stripUnknown: true,
     });
-    // [KO] 실패 메시지를 모두 합쳐 VALIDATION_ERROR로 던진다
+    // Join all failure messages into one VALIDATION_ERROR
     if (error) {
       throw new AppError(
         'VALIDATION_ERROR',
         error.details.map((detail) => detail.message).join(', '),
       );
     }
-    // [KO] 검증·정리된 값(알 수 없는 필드 제거)으로 교체
+    // Replace with the validated value (unknown fields removed)
     req[source] = value;
     next();
   };

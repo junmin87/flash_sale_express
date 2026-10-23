@@ -1,4 +1,5 @@
-// [KO] 헬스체크 컨트롤러: Redis·PostgreSQL 연결 상태와 호스트명 반환
+// Health check controller: returns the Redis and PostgreSQL status and the
+// hostname
 
 import type { Request, Response } from 'express';
 import type { Redis } from 'ioredis';

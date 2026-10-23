@@ -1,4 +1,5 @@
-// [KO] 동시 구매 통합 테스트: 초과 판매·중복 구매가 없고, 워커 저장 후 재고·구매자·주문 수가 맞는지
+// Concurrent purchase integration tests: no overselling or duplicate purchases,
+// and stock, buyers and orders match after the worker saves them
 
 import type { Server } from 'node:http';
 import request from 'supertest';
@@ -22,7 +23,8 @@ describe('concurrent purchases', () => {
 
   beforeAll(async () => {
     clients = await connect();
-    // [KO] 요청마다 임시 서버를 띄우지 않고 하나의 HTTP 서버로 동시에 보낸다
+    // Send concurrent requests to one HTTP server instead of starting a
+    // temporary server per request
     server = createApp({ redis: clients.redis, pool: clients.pool }).listen(0);
   });
 
@@ -35,7 +37,7 @@ describe('concurrent purchases', () => {
     await disconnect(clients);
   });
 
-  // [KO] 모든 요청을 먼저 만든 뒤 한꺼번에 기다린다
+  // Create all requests first, then wait for them together
   function purchaseAll(userIds: string[]) {
     return Promise.all(
       userIds.map(async (userId) => {
@@ -63,7 +65,8 @@ describe('concurrent purchases', () => {
       expect(r).toMatchObject({ status: 409, code: 'SOLD_OUT' });
     }
 
-    // [KO] Redis: 재고 0, 구매자 명단 = 성공한 사용자, Stream 메모 = 성공 수
+    // Redis: stock is 0, buyers are the successful users, stream length is the
+    // success count
     const successIds = succeeded.map((r) => r.userId).sort();
     expect(await redis.get(REDIS_KEYS.SALE_STOCK)).toBe('0');
     expect((await redis.smembers(REDIS_KEYS.SALE_BUYERS)).sort()).toEqual(
@@ -71,7 +74,6 @@ describe('concurrent purchases', () => {
     );
     expect(await redis.xlen(REDIS_KEYS.ORDER_STREAM)).toBe(TOTAL_STOCK);
 
-    // [KO] 워커로 메모를 모두 저장
     await drainOrders(createOrderWorker({ redis: workerRedis, pool }), redis);
 
     const orders = await selectOrders(pool);
@@ -81,7 +83,7 @@ describe('concurrent purchases', () => {
     expect(orderUserIds).toEqual(successIds);
     expect(await groupInfo(redis)).toEqual({ pending: 0, lag: 0 });
 
-    // [KO] 총 재고 = 남은 재고 + 구매자 수 = 주문 수
+    // Total stock = remaining stock + buyers = orders
     const totalStock = Number(await redis.get(REDIS_KEYS.SALE_TOTAL_STOCK));
     const remaining = Number(await redis.get(REDIS_KEYS.SALE_STOCK));
     const buyers = await redis.scard(REDIS_KEYS.SALE_BUYERS);

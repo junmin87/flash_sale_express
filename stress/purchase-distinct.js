@@ -1,4 +1,5 @@
-// [KO] 시나리오 A: 서로 다른 userId 10,000개를 가상 사용자 1,000명이 동시에 구매. 성공(201)은 재고 수(100)와 정확히 같아야 한다
+// Scenario A: 1,000 virtual users buy with 10,000 different userIds. Successes
+// (201) must equal the stock (100)
 // Run by stress/run.sh after the sale is reset with stock 100
 
 import http from 'k6/http';
@@ -9,7 +10,6 @@ import { Counter } from 'k6/metrics';
 const PURCHASE_URL = 'http://nginx/api/purchases';
 const STOCK = 100;
 
-// [KO] 응답 코드별 개수
 const created = new Counter('status_201');
 const soldOut = new Counter('status_409_sold_out');
 const alreadyPurchased = new Counter('status_409_already_purchased');
@@ -27,7 +27,8 @@ const COUNTERS = [
 
 export const options = {
   scenarios: {
-    // [KO] 1,000 VU가 10,000번의 반복을 나눠 실행. 반복 번호가 테스트 전체에서 유일하므로 userId도 유일
+    // 1,000 VUs share 10,000 iterations. The iteration number is unique across
+    // the test, so each userId is unique
     distinct_users: {
       executor: 'shared-iterations',
       vus: 1000,
@@ -56,7 +57,7 @@ export default function () {
   record(res);
 }
 
-// [KO] 응답 status와 에러 코드로 분류해 해당 카운터를 1 증가
+// Classify by response status and error code, and add 1 to the matching counter
 function record(res) {
   if (res.status === 201) return created.add(1);
   if (res.status === 403) return forbidden.add(1);
@@ -77,7 +78,8 @@ function errorCode(res) {
   }
 }
 
-// [KO] 처리량, 응답 시간, 응답 코드별 개수, 통과 조건 결과를 표로 출력
+// Print throughput, response times, counts per response code and pass check
+// results as a table
 export function handleSummary(data) {
   const m = data.metrics;
   const count = (name) => m[name].values.count;

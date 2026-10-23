@@ -1,4 +1,4 @@
-// [KO] 관리자 세일 설정 요청(startAt, endAt, stock)의 Joi 검증 스키마
+// Joi schema for the admin sale settings request (startAt, endAt, stock)
 
 import Joi, { CustomHelpers } from 'joi';
 
@@ -8,7 +8,6 @@ export interface SetSaleInput {
   stock: number;
 }
 
-// [KO] endAt이 startAt보다 늦은지 확인
 function startBeforeEnd(endAt: string, helpers: CustomHelpers) {
   const { startAt } = helpers.state.ancestors[0] as { startAt?: unknown };
   if (typeof startAt === 'string' && Date.parse(startAt) < Date.parse(endAt)) {
@@ -20,6 +19,6 @@ function startBeforeEnd(endAt: string, helpers: CustomHelpers) {
 export const setSaleSchema = Joi.object<SetSaleInput>({
   startAt: Joi.string().isoDate().required(),
   endAt: Joi.string().isoDate().custom(startBeforeEnd).required(),
-  // [KO] strict: 문자열 '10'을 숫자로 변환하지 않고 거부
+  // strict: reject the string '10' instead of converting it to a number
   stock: Joi.number().strict().integer().min(0).required(),
 });

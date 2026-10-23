@@ -1,4 +1,4 @@
-// [KO] errorHandler 유닛 테스트: 에러 종류별 응답 형식·status 검증
+// errorHandler unit tests: response format and status for each kind of error
 
 import type { NextFunction, Request, Response } from 'express';
 import Joi from 'joi';

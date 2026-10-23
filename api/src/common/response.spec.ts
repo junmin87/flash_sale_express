@@ -1,4 +1,4 @@
-// [KO] ok() 응답 형식 유닛 테스트
+// ok() response format unit tests
 
 import type { Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';

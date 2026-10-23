@@ -1,4 +1,4 @@
-// [KO] ADMIN_ENABLED=false면 관리자 API를 404로 숨기는 미들웨어
+// Middleware that hides the admin API with 404 when ADMIN_ENABLED=false
 
 import type { RequestHandler } from 'express';
 import { config } from '../../config/config.js';

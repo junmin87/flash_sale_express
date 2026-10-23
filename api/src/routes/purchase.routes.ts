@@ -1,4 +1,5 @@
-// [KO] POST /api/purchases, GET /api/purchases/:userId 라우트 (검증 → 컨트롤러)
+// POST /api/purchases and GET /api/purchases/:userId routes (validation ->
+// controller)
 
 import { Router } from 'express';
 import { validate } from '../common/middlewares/validate.js';

@@ -1,4 +1,4 @@
-// [KO] GET /api/health 통합 테스트 (실제 Redis·PostgreSQL)
+// GET /api/health integration tests (real Redis and PostgreSQL)
 
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

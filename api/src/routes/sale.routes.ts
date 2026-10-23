@@ -1,4 +1,4 @@
-// [KO] GET /api/sale 라우트
+// GET /api/sale route
 
 import { Router } from 'express';
 import type { createSaleController } from '../controllers/sale.controller.js';

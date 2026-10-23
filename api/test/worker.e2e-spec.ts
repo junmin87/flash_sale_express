@@ -1,4 +1,5 @@
-// [KO] 주문 워커 통합 테스트: runOnce를 직접 호출해 Stream 메모가 orders에 저장되는지 확인
+// Order worker integration tests: call runOnce directly and check that stream
+// entries are saved to orders
 
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -78,7 +79,7 @@ describe('order worker', () => {
     const worker = createWorker();
     await purchase('user-1');
     await drainOrders(worker, clients.redis);
-    // [KO] 같은 내용의 메모를 한 번 더 넣는다 (중복 전달 상황)
+    // Add the same entry again (duplicate delivery)
     const [[, fields]] = await streamEntries();
     await clients.redis.xadd(REDIS_KEYS.ORDER_STREAM, '*', ...fields);
 
@@ -91,7 +92,8 @@ describe('order worker', () => {
   it('keeps one order when the entry was already saved before the worker crashed', async () => {
     const { redis, pool } = clients;
     await purchase('user-1');
-    // [KO] 워커가 DB에 저장한 뒤 XACK 전에 죽은 상황: 같은 주문을 orders에 미리 넣는다
+    // The worker saved to the DB but died before XACK: insert the same order
+    // first
     const [[, fields]] = await streamEntries();
     const value = (name: string) => fields[fields.indexOf(name) + 1];
     await pool.query(

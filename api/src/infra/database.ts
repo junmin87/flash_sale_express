@@ -1,4 +1,4 @@
-// [KO] config 기반 PostgreSQL 커넥션 풀 생성
+// Creates the PostgreSQL connection pool from config
 
 import { Pool } from 'pg';
 import { config } from '../config/config.js';

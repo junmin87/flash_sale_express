@@ -1,4 +1,4 @@
-// [KO] setSaleSchema 검증 규칙 유닛 테스트
+// setSaleSchema validation unit tests
 
 import { describe, expect, it } from 'vitest';
 import { setSaleSchema } from './sale.validator.js';

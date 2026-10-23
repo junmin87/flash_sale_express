@@ -1,4 +1,5 @@
-// [KO] 시나리오 B: 같은 userId로 가상 사용자 1,000명이 동시에 한 번씩 구매. 성공은 정확히 1, 나머지는 전부 ALREADY_PURCHASED여야 한다
+// Scenario B: 1,000 virtual users each buy once with the same userId. Exactly 1
+// must succeed and all others must get ALREADY_PURCHASED
 // Run by stress/run.sh after the sale is reset with stock 100
 
 import http from 'k6/http';
@@ -9,7 +10,6 @@ const PURCHASE_URL = 'http://nginx/api/purchases';
 const USER_ID = 'stress-b-user';
 const REQUESTS = 1000;
 
-// [KO] 응답 코드별 개수
 const created = new Counter('status_201');
 const soldOut = new Counter('status_409_sold_out');
 const alreadyPurchased = new Counter('status_409_already_purchased');
@@ -27,7 +27,7 @@ const COUNTERS = [
 
 export const options = {
   scenarios: {
-    // [KO] VU 1,000명이 각자 정확히 1번씩 요청
+    // Each of the 1,000 VUs sends exactly one request
     same_user: {
       executor: 'per-vu-iterations',
       vus: REQUESTS,
@@ -56,7 +56,7 @@ export default function () {
   record(res);
 }
 
-// [KO] 응답 status와 에러 코드로 분류해 해당 카운터를 1 증가
+// Classify by response status and error code, and add 1 to the matching counter
 function record(res) {
   if (res.status === 201) return created.add(1);
   if (res.status === 403) return forbidden.add(1);
@@ -77,7 +77,8 @@ function errorCode(res) {
   }
 }
 
-// [KO] 처리량, 응답 시간, 응답 코드별 개수, 통과 조건 결과를 표로 출력
+// Print throughput, response times, counts per response code and pass check
+// results as a table
 export function handleSummary(data) {
   const m = data.metrics;
   const count = (name) => m[name].values.count;

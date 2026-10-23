@@ -1,4 +1,4 @@
-// [KO] orderWorker 유닛 테스트 (Redis·DB는 가짜 객체로 대체)
+// orderWorker unit tests (Redis and DB are replaced with fakes)
 
 import type { Redis } from 'ioredis';
 import type { Pool } from 'pg';

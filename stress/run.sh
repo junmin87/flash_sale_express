@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# [KO] 스트레스 테스트 실행기: 시나리오마다 세일 리셋 → k6 실행 → 워커 저장 대기 → Redis·Postgres 정합성 검증 후 PASS/FAIL 출력
 # Runs both stress scenarios against the running compose stack (nginx -> api1/api2
 # -> Redis Lua -> worker -> Postgres). Exits 1 if any check fails.
 # Requires: docker compose up -d --build
@@ -31,12 +30,14 @@ psql_query() {
     sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -tAc "$0"' "$1"
 }
 
-# [KO] epoch 초를 ISO 8601(UTC)로 변환. GNU date(-d)와 BSD/macOS date(-r) 모두 지원
+# Converts epoch seconds to ISO 8601 (UTC). Works with GNU date (-d) and
+# BSD/macOS date (-r)
 iso_time() {
   date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -r "$1" +%Y-%m-%dT%H:%M:%SZ
 }
 
-# [KO] 기대값과 실제값이 같으면 PASS, 다르면 FAIL 출력 후 실패 표시
+# Prints PASS if expected and actual match, otherwise prints FAIL and marks the
+# run as failed
 check() {
   local label="$1" expected="$2" actual="$3"
   if [ "$actual" = "$expected" ]; then
@@ -47,7 +48,7 @@ check() {
   fi
 }
 
-# [KO] 1. 전체 스택 확인: /api/health가 응답하고 Redis·Postgres 모두 ok인지
+# 1. Check the stack: /api/health responds and both Redis and Postgres are ok
 check_stack() {
   local health
   if ! health="$(curl -sf --max-time 5 "$BASE_URL/health")" ||
@@ -59,7 +60,8 @@ check_stack() {
   fi
 }
 
-# [KO] 2. 세일 리셋: 1분 전 시작, 1시간 뒤 종료, 재고 100. 관리자 API가 꺼져 있으면(404) 안내 후 종료
+# 2. Reset the sale: started 1 minute ago, ends in 1 hour, stock 100. If the
+# admin API is off (404), print a hint and exit
 reset_sale() {
   local now body response status
   now="$(date +%s)"
@@ -79,7 +81,8 @@ reset_sale() {
   echo "Sale reset: stock $SALE_STOCK, started 1 minute ago, ends in 1 hour"
 }
 
-# [KO] 4. 워커 저장 대기: Postgres 주문 수가 Redis 구매자 수와 같아질 때까지 최대 60초
+# 4. Wait for the worker: up to 60 seconds until the Postgres order count equals
+# the Redis buyer count
 wait_for_worker() {
   local buyers orders
   for ((i = 0; i < WORKER_TIMEOUT_SECONDS; i++)); do
@@ -93,7 +96,8 @@ wait_for_worker() {
   check "Worker persisted all orders within ${WORKER_TIMEOUT_SECONDS}s" "$buyers" "$orders"
 }
 
-# [KO] 5. 정합성 검증: 총 재고 = 남은 재고 + 구매자 수, 구매자 수 = 주문 수, 중복 0, 성공 수
+# 5. Verify: total stock = remaining stock + buyers, buyers = orders, no
+# duplicates, success count
 verify() {
   local expected_success="$1" total remaining buyers orders duplicates
   total="$(redis_cmd GET "$KEY_TOTAL_STOCK")"
@@ -110,7 +114,8 @@ verify() {
   check "Successful purchases (Postgres orders)" "$expected_success" "$orders"
 }
 
-# [KO] 시나리오 하나 실행: 리셋 → k6 → 워커 대기 → 검증. k6 출력은 stress/results/에 저장
+# Run one scenario: reset -> k6 -> wait for the worker -> verify. k6 output is
+# saved to stress/results/
 run_scenario() {
   local title="$1" script="$2" expected_success="$3" result_file
   result_file="$RESULTS_DIR/$(date +%Y%m%d-%H%M%S)-${script%.js}.txt"

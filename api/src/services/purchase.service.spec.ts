@@ -1,4 +1,5 @@
-// [KO] 구매 서비스 유닛 테스트 (Redis는 가짜 객체로 대체): Lua 결과 코드별 응답·에러 매핑, Redis 에러 → 503
+// Purchase service unit tests (Redis is replaced with a fake): responses and
+// errors for each Lua result code, Redis errors -> 503
 
 import type { Redis } from 'ioredis';
 import { describe, expect, it, vi } from 'vitest';

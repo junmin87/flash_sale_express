@@ -1,4 +1,5 @@
-// [KO] 통합 테스트 시작 전 1회: 테스트 DB가 없으면 만들고, orders 테이블이 없으면 db/init.sql을 그대로 실행한다
+// Runs once before the integration tests: creates the test database if missing,
+// and runs db/init.sql as is if the orders table is missing
 
 import { readFileSync } from 'node:fs';
 import { Client } from 'pg';
@@ -11,7 +12,7 @@ const initSql = readFileSync(
   'utf8',
 );
 
-// [KO] 지정한 DB에 연결해 작업 후 연결을 닫는다
+// Connects to the given database, runs the callback, then closes the connection
 async function withClient<T>(
   database: string,
   run: (client: Client) => Promise<T>,
@@ -38,7 +39,8 @@ export default async function setup(project: TestProject): Promise<void> {
     throw new Error('DATABASE_NAME must be set in vitest.e2e.config.ts');
   }
 
-  // [KO] 항상 존재하는 postgres DB에 연결해 테스트 DB 존재 여부 확인 후 생성
+  // Connect to the postgres database, which always exists, and create the test
+  // database if it is missing
   await withClient('postgres', async (client) => {
     const result = await client.query(
       'SELECT 1 FROM pg_database WHERE datname = $1',

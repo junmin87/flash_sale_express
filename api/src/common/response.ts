@@ -1,4 +1,4 @@
-// [KO] 성공 응답 { success: true, data } 헬퍼
+// Helper for the success response { success: true, data }
 
 import type { Response } from 'express';
 

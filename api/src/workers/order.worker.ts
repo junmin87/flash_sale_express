@@ -1,4 +1,6 @@
-// [KO] 주문 Stream을 컨슈머 그룹으로 읽어 orders 테이블에 저장하는 워커. 저장된 메모만 XACK, 오래 처리 안 된 메모는 XAUTOCLAIM으로 재처리
+// Worker that reads the order stream as a consumer group and saves entries to
+// the orders table. Only saved entries are XACKed, and entries left unacked too
+// long are reprocessed with XAUTOCLAIM
 
 import type { Redis } from 'ioredis';
 import { hostname } from 'node:os';
@@ -29,12 +31,13 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-// [KO] 그룹이 없을 때(관리자 리셋으로 Stream이 DEL된 경우) Redis가 돌려주는 에러인지
+// Whether Redis replied that the group is missing (the stream was deleted by an
+// admin reset)
 function isNoGroupError(error: unknown): boolean {
   return errorMessage(error).startsWith('NOGROUP');
 }
 
-// [KO] [field, value, ...] 배열을 주문 입력으로 변환
+// Converts a [field, value, ...] array to an order input
 function toOrder(fields: string[]) {
   const values: Record<string, string> = {};
   for (let i = 0; i < fields.length; i += 2) {
@@ -63,7 +66,8 @@ export function createOrderWorker({
   let loop: Promise<void> | undefined;
   let lastClaimAt = 0;
 
-  // [KO] 컨슈머 그룹 생성. 0부터 읽어 그룹 생성 전에 쌓인 메모도 처리한다. 이미 있으면(BUSYGROUP) 무시
+  // Creates the consumer group. Reads from 0 so entries added before the group
+  // exists are also processed. Ignores BUSYGROUP (already exists)
   async function ensureGroup(): Promise<void> {
     try {
       await redis.xgroup(
@@ -81,7 +85,6 @@ export function createOrderWorker({
 
   // Stops at the first database failure so the rest stays pending and is
   // reclaimed later
-  // [KO] 메모마다 INSERT 후 XACK. DB 실패 시 XACK 없이 에러 로그, 1초 쉰 뒤 false 반환
   async function processEntries(entries: StreamEntry[]): Promise<boolean> {
     for (const [id, fields] of entries) {
       try {
@@ -96,7 +99,8 @@ export function createOrderWorker({
     return true;
   }
 
-  // [KO] 이 워커에 아직 전달되지 않은 새 메모를 최대 100건 읽는다. 없으면 5초까지 대기
+  // Reads up to 100 new entries not yet delivered to this worker, waiting up to
+  // 5 seconds if there are none
   async function readNew(): Promise<void> {
     const reply = (await redis.xreadgroup(
       'GROUP',
@@ -114,7 +118,8 @@ export function createOrderWorker({
     await processEntries(reply[0][1]);
   }
 
-  // [KO] 30초 넘게 XACK 되지 않은 메모를 이 워커로 가져와 같은 방식으로 처리. 끝까지 훑거나 DB 실패 시 멈춘다
+  // Claims entries not XACKed for over 30 seconds and processes them the same
+  // way. Stops at the end of the scan or on a DB failure
   async function claimPending(): Promise<void> {
     let cursor = '0-0';
     do {
@@ -133,7 +138,8 @@ export function createOrderWorker({
     } while (cursor !== '0-0' && running);
   }
 
-  // [KO] 한 번의 반복: 10초가 지났으면 재처리 후 새 메모 읽기. Redis 에러는 여기서 처리해 루프가 멈추지 않게 한다
+  // One iteration: reprocess if 10 seconds have passed, then read new entries.
+  // Redis errors are handled here so the loop does not stop
   async function runOnce(now: number = Date.now()): Promise<void> {
     try {
       if (now - lastClaimAt >= CLAIM_INTERVAL_MS) {
@@ -143,7 +149,8 @@ export function createOrderWorker({
       await readNew();
     } catch (error) {
       if (isNoGroupError(error)) {
-        // [KO] 관리자 리셋으로 Stream이 삭제되면 그룹도 사라지므로 다시 만든다
+        // An admin reset deletes the stream, which also removes the group, so
+        // create it again
         log('info', 'Consumer group is missing, creating it again');
         await recreateGroup();
       } else {
@@ -152,7 +159,7 @@ export function createOrderWorker({
     }
   }
 
-  // [KO] 그룹 재생성. 실패하면 로그 남기고 1초 대기 후 다음 반복에서 다시 시도
+  // On failure, log and wait 1 second. The next iteration tries again
   async function recreateGroup(): Promise<void> {
     try {
       await ensureGroup();
@@ -161,13 +168,13 @@ export function createOrderWorker({
     }
   }
 
-  // [KO] Redis 에러 로그를 남기고 1초 대기
   async function logAndWait(error: unknown): Promise<void> {
     log('error', `Order worker Redis error: ${errorMessage(error)}`);
     await sleep(RETRY_DELAY_MS);
   }
 
-  // [KO] 그룹을 준비한 뒤 stop() 전까지 반복. 그룹 생성 실패도 1초 후 재시도
+  // Prepares the group, then repeats until stop(). Group creation failures are
+  // also retried after 1 second
   async function run(): Promise<void> {
     while (running) {
       try {
@@ -189,7 +196,7 @@ export function createOrderWorker({
     loop = run();
   }
 
-  // [KO] 새 반복을 멈추고 현재 처리 중인 묶음이 끝날 때까지 기다린다
+  // Stops new iterations and waits for the current batch to finish
   async function stop(): Promise<void> {
     running = false;
     await loop;

@@ -1,4 +1,5 @@
-// [KO] 구매 처리·구매 여부 조회 서비스. 판정은 Lua 스크립트 하나에서 하고, Redis를 인자로 받는 팩토리 함수
+// Purchase and purchase lookup service. The decision runs in one Lua script. A
+// factory function that takes Redis
 
 import type { Redis } from 'ioredis';
 import { AppError } from '../common/errors/app-error.js';
@@ -31,7 +32,6 @@ function isPurchaseFailure(result: string): result is PurchaseFailure {
 // Any Redis failure (disconnected, timed out, script error) rejects the
 // request instead of falling back to the database. Not logged per request,
 // so an outage does not flood the logs
-// [KO] Redis 명령 실패는 모두 503 SERVICE_UNAVAILABLE로 변환
 async function callRedis<T>(command: () => Promise<T>): Promise<T> {
   try {
     return await command();
@@ -43,7 +43,8 @@ async function callRedis<T>(command: () => Promise<T>): Promise<T> {
 export type PurchaseService = ReturnType<typeof createPurchaseService>;
 
 export function createPurchaseService({ redis }: { redis: Redis }) {
-  // [KO] 시간·중복·재고 확인과 차감·구매자 기록·주문 Stream 추가를 Lua 한 번으로 처리
+  // Time, duplicate and stock checks plus the stock decrement, buyer record and
+  // order stream entry run in one Lua call
   async function purchase(userId: string): Promise<PurchaseResult> {
     const { productId } = config;
     const result = await callRedis(() =>
@@ -59,11 +60,11 @@ export function createPurchaseService({ redis }: { redis: Redis }) {
     );
     if (result === 'OK') return { userId, productId };
     if (isPurchaseFailure(result)) throw new AppError(result);
-    // [KO] 스크립트가 정의되지 않은 값을 반환하면 버그이므로 500
+    // An unexpected script result is a bug, so it becomes a 500
     throw new Error(`Unexpected purchase script result: ${result}`);
   }
 
-  // [KO] Redis 구매자 명단 기준으로 구매 여부 조회
+  // Checks the purchase status from the Redis buyer set
   async function getPurchase(userId: string): Promise<PurchaseStatus> {
     const isMember = await callRedis(() =>
       redis.sismember(REDIS_KEYS.SALE_BUYERS, userId),

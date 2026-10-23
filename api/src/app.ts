@@ -1,4 +1,5 @@
-// [KO] Express 앱 조립: 서비스·컨트롤러·라우터 연결, /api 404 처리, 에러 미들웨어 등록
+// Builds the Express app: wires services, controllers and routers, handles /api
+// 404s and registers the error middleware
 
 import express, { Express } from 'express';
 import type { Redis } from 'ioredis';
@@ -42,7 +43,7 @@ export function createApp({
     '/api/admin',
     createAdminRouter(createAdminController(saleService)),
   );
-  // [KO] 매칭되지 않은 /api 경로는 NOT_FOUND
+  // Unmatched /api paths return NOT_FOUND
   app.use('/api', (req, _res, next) => {
     next(new AppError('NOT_FOUND', `Cannot ${req.method} ${req.originalUrl}`));
   });

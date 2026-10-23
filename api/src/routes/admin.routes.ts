@@ -1,4 +1,4 @@
-// [KO] POST /api/admin/sale 라우트 (관리자 활성 확인 → 검증 → 컨트롤러)
+// POST /api/admin/sale route (admin check -> validation -> controller)
 
 import { Router } from 'express';
 import { adminEnabled } from '../common/middlewares/admin-enabled.js';

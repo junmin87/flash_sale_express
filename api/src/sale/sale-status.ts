@@ -1,4 +1,5 @@
-// [KO] 현재 시각과 세일 기간으로 세일 상태(upcoming/active/ended)를 판정하는 순수 함수
+// Pure function that returns the sale status (upcoming/active/ended) from the
+// current time and the sale window
 
 export type SaleStatus = 'upcoming' | 'active' | 'ended';
 
@@ -8,7 +9,6 @@ export function getSaleStatus(
   startAt: number,
   endAt: number,
 ): SaleStatus {
-  // [KO] 시작 전 → upcoming, 시작 ~ 종료 전 → active, 이후 → ended
   if (now < startAt) return 'upcoming';
   if (now < endAt) return 'active';
   return 'ended';

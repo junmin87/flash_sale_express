@@ -1,4 +1,5 @@
-// [KO] 모든 에러 코드와 HTTP status·기본 메시지를 정의하는 유일한 곳
+// The only place that defines error codes with their HTTP status and default
+// message
 
 export const ERROR_CODES = {
   SALE_NOT_ACTIVE: { status: 403, message: 'The sale is not active' },

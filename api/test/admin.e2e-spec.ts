@@ -1,4 +1,5 @@
-// [KO] POST /api/admin/sale 통합 테스트: 설정 변경 후 구매자 명단·Stream·orders가 비워지는지
+// POST /api/admin/sale integration tests: buyers, stream and orders are cleared
+// after the settings change
 
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -39,7 +40,7 @@ describe('POST /api/admin/sale', () => {
       await request(app).post('/api/purchases').send({ userId });
     }
     await drainOrders(createOrderWorker({ redis: workerRedis, pool }), redis);
-    // [KO] 아직 저장되지 않은 메모도 Stream에 남겨 둔다
+    // Leave an entry in the stream that is not saved yet
     await request(app).post('/api/purchases').send({ userId: 'user-4' });
     expect(await redis.scard(REDIS_KEYS.SALE_BUYERS)).toBe(4);
     expect(await redis.xlen(REDIS_KEYS.ORDER_STREAM)).toBe(4);
