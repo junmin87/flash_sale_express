@@ -141,22 +141,30 @@ export function createOrderWorker({
         await claimPending();
       }
       await readNew();
-      return;
     } catch (error) {
-      if (!isNoGroupError(error)) {
-        log('error', `Order worker Redis error: ${errorMessage(error)}`);
-        await sleep(RETRY_DELAY_MS);
-        return;
+      if (isNoGroupError(error)) {
+        // [KO] 관리자 리셋으로 Stream이 삭제되면 그룹도 사라지므로 다시 만든다
+        log('info', 'Consumer group is missing, creating it again');
+        await recreateGroup();
+      } else {
+        await logAndWait(error);
       }
     }
-    // [KO] 관리자 리셋으로 Stream이 삭제되면 그룹도 사라지므로 다시 만든다
-    log('info', 'Consumer group is missing, creating it again');
+  }
+
+  // [KO] 그룹 재생성. 실패하면 로그 남기고 1초 대기 후 다음 반복에서 다시 시도
+  async function recreateGroup(): Promise<void> {
     try {
       await ensureGroup();
     } catch (error) {
-      log('error', `Order worker Redis error: ${errorMessage(error)}`);
-      await sleep(RETRY_DELAY_MS);
+      await logAndWait(error);
     }
+  }
+
+  // [KO] Redis 에러 로그를 남기고 1초 대기
+  async function logAndWait(error: unknown): Promise<void> {
+    log('error', `Order worker Redis error: ${errorMessage(error)}`);
+    await sleep(RETRY_DELAY_MS);
   }
 
   // [KO] 그룹을 준비한 뒤 stop() 전까지 반복. 그룹 생성 실패도 1초 후 재시도
@@ -166,8 +174,7 @@ export function createOrderWorker({
         await ensureGroup();
         break;
       } catch (error) {
-        log('error', `Order worker Redis error: ${errorMessage(error)}`);
-        await sleep(RETRY_DELAY_MS);
+        await logAndWait(error);
       }
     }
     while (running) {

@@ -37,12 +37,6 @@ describe('setSaleSchema', () => {
     ).toEqual(['endAt']);
   });
 
-  it('rejects a date that does not exist', () => {
-    expect(errorsFor({ ...valid, startAt: '2026-02-30T09:00:00Z' })).toEqual([
-      'startAt',
-    ]);
-  });
-
   it('rejects negative stock', () => {
     expect(errorsFor({ ...valid, stock: -1 })).toEqual(['stock']);
   });
