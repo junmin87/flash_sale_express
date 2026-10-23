@@ -12,6 +12,9 @@ coverage
 # logs
 *.log
 
+# archives (review zips etc.)
+*.zip
+
 # local only
 CLAUDE.md
 .DS_Store

@@ -10,6 +10,16 @@ import { createSaleService } from './services/sale.service.js';
 const redis = createRedisClient();
 const pool = createPool();
 
+// Without listeners these errors are printed by ioredis or crash the
+// process (pg emits 'error' when an idle client loses its connection)
+// [KO] 연결 에러는 로그만 남기고 프로세스는 유지. 재연결은 ioredis·pg가 처리
+redis.on('error', (error: Error) => {
+  log('error', `Redis connection error: ${error.message}`);
+});
+pool.on('error', (error: Error) => {
+  log('error', `PostgreSQL idle client error: ${error.message}`);
+});
+
 // The offline queue is disabled, so commands fail until the connection is
 // ready. ioredis keeps reconnecting until then
 // [KO] Redis 연결이 준비될 때까지 기다린 뒤 initSale 실행
