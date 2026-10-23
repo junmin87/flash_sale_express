@@ -14,21 +14,10 @@ SALE_STOCK=100
 WORKER_TIMEOUT_SECONDS=60
 RESULTS_DIR="$ROOT/stress/results"
 
-# [KO] Redis 키 이름은 redis-keys.ts 상수에서 읽는다 (키 문자열을 여기서 따로 정의하지 않음)
-redis_key() {
-  local key
-  key="$(sed -n "s/^ *$1: '\([^']*\)',.*/\1/p" "$ROOT/api/src/infra/redis-keys.ts")"
-  if [ -z "$key" ]; then
-    echo "Cannot find $1 in api/src/infra/redis-keys.ts" >&2
-    exit 1
-  fi
-  echo "$key"
-}
-KEY_STOCK="$(redis_key SALE_STOCK)"
-KEY_TOTAL_STOCK="$(redis_key SALE_TOTAL_STOCK)"
-KEY_BUYERS="$(redis_key SALE_BUYERS)"
-KEY_ORDER_STREAM="$(redis_key ORDER_STREAM)"
-KEY_ORDER_GROUP="$(redis_key ORDER_GROUP)"
+# Must match api/src/infra/redis-keys.ts
+KEY_STOCK="sale:stock"
+KEY_TOTAL_STOCK="sale:total_stock"
+KEY_BUYERS="sale:buyers"
 
 failed=0
 
@@ -90,27 +79,18 @@ reset_sale() {
   echo "Sale reset: stock $SALE_STOCK, started 1 minute ago, ends in 1 hour"
 }
 
-# [KO] 4. 워커 저장 대기: 컨슈머 그룹의 lag·pending이 모두 0이 될 때까지 최대 60초
+# [KO] 4. 워커 저장 대기: Postgres 주문 수가 Redis 구매자 수와 같아질 때까지 최대 60초
 wait_for_worker() {
-  local groups pending lag
+  local buyers orders
   for ((i = 0; i < WORKER_TIMEOUT_SECONDS; i++)); do
-    # XINFO GROUPS prints field and value on alternate lines
-    groups="$(redis_cmd XINFO GROUPS "$KEY_ORDER_STREAM" 2>/dev/null || true)"
-    pending="$(awk -v group="$KEY_ORDER_GROUP" '
-      NR % 2 == 1 { field = $0; next }
-      field == "name" { matched = ($0 == group) }
-      matched && field == "pending" { print; exit }' <<<"$groups")"
-    lag="$(awk -v group="$KEY_ORDER_GROUP" '
-      NR % 2 == 1 { field = $0; next }
-      field == "name" { matched = ($0 == group) }
-      matched && field == "lag" { print; exit }' <<<"$groups")"
-    if [ "$pending" = "0" ] && [ "$lag" = "0" ]; then
+    buyers="$(redis_cmd SCARD "$KEY_BUYERS")"
+    orders="$(psql_query 'SELECT count(*) FROM orders')"
+    if [ "$buyers" = "$orders" ]; then
       break
     fi
     sleep 1
   done
-  check "Worker persisted all orders within ${WORKER_TIMEOUT_SECONDS}s" \
-    "pending 0, lag 0" "pending ${pending:-?}, lag ${lag:-?}"
+  check "Worker persisted all orders within ${WORKER_TIMEOUT_SECONDS}s" "$buyers" "$orders"
 }
 
 # [KO] 5. 정합성 검증: 총 재고 = 남은 재고 + 구매자 수, 구매자 수 = 주문 수, 중복 0, 성공 수
