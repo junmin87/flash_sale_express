@@ -75,6 +75,13 @@ services:
       - api1
       - api2
 
+  # Load test runner for stress/run.sh. Only started with --profile stress
+  k6:
+    image: grafana/k6:2.3.0
+    profiles: ["stress"]
+    volumes:
+      - ./stress:/scripts:ro
+
 volumes:
   postgres-data:
   redis-data:

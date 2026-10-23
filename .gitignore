@@ -12,6 +12,9 @@ coverage
 # logs
 *.log
 
+# stress test results
+stress/results/
+
 # archives (review zips etc.)
 *.zip
 
