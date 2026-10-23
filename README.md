@@ -124,7 +124,7 @@ Checks: total stock = remaining stock + number of buyers, Redis buyers = Postgre
 
 | | Throughput | p95 latency |
 |---|---|---|
-| A | about 10,000 req/s | about 750–800 ms |
+| A | about 9,000–11,000 req/s | about 750–950 ms |
 | B | about 4,400–7,000 req/s | about 50–110 ms |
 
 The p95 in A is high because 1,000 users send their first request at the same moment, so the first requests have to wait. k6 also runs on the same laptop.
