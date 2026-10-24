@@ -11,9 +11,13 @@ A flash sale for a single product with limited stock. The sale runs only during 
 
 **Architecture:** nginx → 2 API instances → Redis → worker → PostgreSQL
 
-- **The purchase decision is a single Redis Lua script.** It checks the sale window, checks whether the user has already bought, checks the stock, decrements the stock and records the order in one step. No other request can run in the middle of it. So even under heavy concurrent traffic, there is no overselling and no double purchase.
-- **A separate worker writes orders to the database.** A purchase request only touches Redis and returns right away. Successful orders are added to a Redis Stream, and the worker saves them to PostgreSQL.
-- **The API is stateless.** Adding more API instances behind nginx increases throughput.
+**Why these technologies**
+
+- **Redis + Lua script:** To prevent overselling and double purchases even with multiple API instances, I chose a Redis Lua script, which runs the stock check, the duplicate check and the stock decrement as one atomic operation.
+- **Redis Stream + worker:** To keep database writes from becoming a bottleneck during traffic spikes, I chose a Redis Stream, which holds successful purchases and lets the worker mark an order as done (ACK) only after it is saved.
+- **PostgreSQL:** To keep a permanent record of orders without saving the same order twice, I chose PostgreSQL, which supports a UNIQUE constraint and `ON CONFLICT DO NOTHING`.
+- **nginx:** To split requests between the two API instances and serve the web page and the API without CORS, I chose nginx, which supports load balancing and proxying `/api` on the same address.
+- **Docker Compose:** To let reviewers run the whole system without any cloud account or keys, I chose Docker Compose, which starts all services with one command.
 
 **Trade-offs**
 
